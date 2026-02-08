@@ -22,6 +22,10 @@ let keys = {};
 let camera = { x: 0, y: 0 };
 let isPaused = false;
 
+// Audio context for sound effects
+let audioContext;
+let isMuted = false;
+
 // Player object
 const player = {
     x: 100,
@@ -59,6 +63,7 @@ document.addEventListener('keydown', (e) => {
     if (e.key === ' ' && player.onGround && gameState === 'PLAYING' && !isPaused) {
         player.velocityY = JUMP_STRENGTH;
         player.onGround = false;
+        playJump();
     }
 });
 
@@ -87,6 +92,147 @@ function drawText(text, x, y, size, color) {
     ctx.font = `bold ${size}px Arial`;
     ctx.textAlign = 'center';
     ctx.fillText(text, x, y);
+}
+
+// ===================================
+// SOUND SYSTEM
+// ===================================
+
+function initAudio() {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function playSound(frequency, duration, type = 'sine', volume = 0.3) {
+    if (isMuted || !audioContext) return;
+
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.frequency.value = frequency;
+    oscillator.type = type;
+    gainNode.gain.value = volume;
+
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + duration);
+}
+
+function playJump() {
+    if (isMuted || !audioContext) return;
+    // Ascending chirp
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+
+    osc.frequency.setValueAtTime(200, audioContext.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.2, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+
+    osc.start(audioContext.currentTime);
+    osc.stop(audioContext.currentTime + 0.1);
+}
+
+function playLand() {
+    playSound(150, 0.05, 'square', 0.1);
+}
+
+function playHit() {
+    if (isMuted || !audioContext) return;
+    // Harsh descending sound
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+
+    osc.frequency.setValueAtTime(400, audioContext.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.2);
+    osc.type = 'sawtooth';
+    gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+
+    osc.start(audioContext.currentTime);
+    osc.stop(audioContext.currentTime + 0.2);
+}
+
+function playShoot() {
+    playSound(600, 0.08, 'square', 0.15);
+}
+
+function playCollect() {
+    if (isMuted || !audioContext) return;
+    // Ascending arpeggio
+    const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+    notes.forEach((freq, i) => {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+
+        osc.frequency.value = freq;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.2, audioContext.currentTime + i * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.1 + 0.15);
+
+        osc.start(audioContext.currentTime + i * 0.1);
+        osc.stop(audioContext.currentTime + i * 0.1 + 0.15);
+    });
+}
+
+function playVictory() {
+    if (isMuted || !audioContext) return;
+    // Victory fanfare
+    const melody = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+    melody.forEach((freq, i) => {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+
+        osc.frequency.value = freq;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.3, audioContext.currentTime + i * 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.15 + 0.2);
+
+        osc.start(audioContext.currentTime + i * 0.15);
+        osc.stop(audioContext.currentTime + i * 0.15 + 0.2);
+    });
+}
+
+function playGameOver() {
+    if (isMuted || !audioContext) return;
+    // Descending sad notes
+    const melody = [523.25, 493.88, 440.00, 392.00]; // C5, B4, A4, G4
+    melody.forEach((freq, i) => {
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
+
+        osc.frequency.value = freq;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.2, audioContext.currentTime + i * 0.2);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.2 + 0.25);
+
+        osc.start(audioContext.currentTime + i * 0.2);
+        osc.stop(audioContext.currentTime + i * 0.2 + 0.25);
+    });
+}
+
+function toggleMute() {
+    isMuted = !isMuted;
+    updateSoundIcon();
+    return isMuted;
+}
+
+function updateSoundIcon() {
+    const soundDisplay = document.getElementById('sound-display');
+    if (soundDisplay) {
+        soundDisplay.textContent = isMuted ? '🔇' : '🔊';
+    }
 }
 
 // ===================================
@@ -120,6 +266,7 @@ function updateUI() {
 function loseLife() {
     lives--;
     updateUI();
+    playHit();
 
     if (lives <= 0) {
         gameOver();
@@ -132,11 +279,13 @@ function loseLife() {
 function gameOver() {
     gameState = 'GAME_OVER';
     document.getElementById('game-over-screen').classList.remove('hidden');
+    playGameOver();
 }
 
 function victory() {
     gameState = 'VICTORY';
     document.getElementById('victory-screen').classList.remove('hidden');
+    playVictory();
 }
 
 function togglePause() {
@@ -468,6 +617,7 @@ function updateLevel1() {
                 velocityY: 2,
                 color: '#FFA500'
             });
+            playShoot();
         }
     }
 
@@ -543,6 +693,7 @@ function updateLevel2() {
     if (key && !key.collected && checkCollision(player, key)) {
         key.collected = true;
         player.hasKey = true;
+        playCollect();
         // Cutscene: Fox steals key
         setTimeout(() => {
             nextLevel();
@@ -637,6 +788,7 @@ function updateLevel3() {
     if (key && !key.collected && checkCollision(player, key)) {
         key.collected = true;
         player.hasKey = true;
+        playCollect();
         setTimeout(() => {
             nextLevel();
         }, 500);
@@ -808,10 +960,26 @@ function initGame() {
     GAME_WIDTH = canvas.width;
     GAME_HEIGHT = canvas.height;
 
+    // Initialize audio
+    initAudio();
+
     // UI Button handlers
     document.getElementById('start-button').addEventListener('click', startGame);
     document.getElementById('restart-button').addEventListener('click', restartGame);
     document.getElementById('play-again-button').addEventListener('click', restartGame);
+
+    // Sound toggle icon
+    const soundDisplay = document.getElementById('sound-display');
+    if (soundDisplay) {
+        soundDisplay.addEventListener('click', toggleMute);
+    }
+
+    // Mute button (M key)
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'm' || e.key === 'M') {
+            toggleMute();
+        }
+    });
 
     // Start the game loop
     gameLoop();
