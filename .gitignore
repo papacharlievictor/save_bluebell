@@ -1,0 +1,14 @@
+# Claude Code internals
+.claude/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+
+# Test files (optional)
+test.html
