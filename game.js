@@ -222,7 +222,7 @@ function loadLevel1() {
 
     // Guard Dogs (chase from behind)
     enemies.push({
-        x: 50,
+        x: -100,
         y: 580,
         width: 50,
         height: 40,
@@ -232,7 +232,7 @@ function loadLevel1() {
     });
 
     enemies.push({
-        x: 0,
+        x: -200,
         y: 580,
         width: 50,
         height: 40,
