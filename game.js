@@ -864,63 +864,62 @@ function draw() {
 
     // Draw platforms
     for (let platform of platforms) {
-        drawRect(platform.x, platform.y, platform.width, platform.height, platform.color);
+        // Draw goal flag if it's a goal platform
+        if (platform.isGoal) {
+            Sprites.drawGoalFlag(ctx, platform.x - camera.x, platform.y - camera.y, platform.width, platform.height);
+        } else {
+            // Regular platform
+            drawRect(platform.x, platform.y, platform.width, platform.height, platform.color);
+        }
     }
 
     // Draw fox
     if (fox) {
-        drawRect(fox.x, fox.y, fox.width, fox.height, fox.color);
-
-        // Draw eyes
-        ctx.fillStyle = currentLevel === 4 && fox.lookingAway ? '#FFFFFF' : '#000000';
-        ctx.fillRect(fox.x + 20 - camera.x, fox.y + 20 - camera.y, 10, 10);
-        ctx.fillRect(fox.x + 50 - camera.x, fox.y + 20 - camera.y, 10, 10);
+        Sprites.drawFox(ctx, fox.x - camera.x, fox.y - camera.y, fox.width, fox.height, currentLevel === 4 && fox.lookingAway);
 
         // Indicate looking away in level 4
         if (currentLevel === 4 && fox.lookingAway) {
             ctx.fillStyle = '#00FF00';
-            ctx.fillRect(fox.x + fox.width / 2 - 5 - camera.x, fox.y - 20 - camera.y, 10, 10);
+            ctx.beginPath();
+            ctx.arc(fox.x + fox.width / 2 - camera.x, fox.y - 20 - camera.y, 8, 0, Math.PI * 2);
+            ctx.fill();
         }
     }
 
     // Draw projectiles
     for (let proj of projectiles) {
-        drawRect(proj.x, proj.y, proj.width, proj.height, proj.color);
+        Sprites.drawProjectile(ctx, proj.x - camera.x, proj.y - camera.y, proj.width, proj.height);
     }
 
     // Draw falling rocks
     for (let rock of fallingRocks) {
-        drawRect(rock.x, rock.y, rock.width, rock.height, rock.color);
+        Sprites.drawRock(ctx, rock.x - camera.x, rock.y - camera.y, rock.width, rock.height);
     }
 
-    // Draw enemies
+    // Draw enemies (dogs)
     for (let enemy of enemies) {
-        drawRect(enemy.x, enemy.y, enemy.width, enemy.height, enemy.color);
+        if (enemy.type === 'dog') {
+            Sprites.drawDog(ctx, enemy.x - camera.x, enemy.y - camera.y, enemy.width, enemy.height);
+        } else {
+            drawRect(enemy.x, enemy.y, enemy.width, enemy.height, enemy.color);
+        }
     }
 
     // Draw key
     if (key && !key.collected) {
-        drawRect(key.x, key.y, key.width, key.height, key.color);
-        // Sparkle effect
-        ctx.fillStyle = '#FFFF00';
-        ctx.fillRect(key.x - 5 - camera.x, key.y + 15 - camera.y, 5, 5);
-        ctx.fillRect(key.x + key.width - camera.x, key.y + 15 - camera.y, 5, 5);
+        Sprites.drawKey(ctx, key.x - camera.x, key.y - camera.y, key.width, key.height);
     }
 
     // Draw cage
     if (cage) {
-        drawRect(cage.x, cage.y, cage.width, cage.height, cage.color);
-        // Draw Blue Bell inside
-        ctx.fillStyle = '#FFA500';
-        ctx.fillRect(cage.x + 20 - camera.x, cage.y + 40 - camera.y, 40, 40);
+        // Draw Blue Bell inside first (so cage bars draw over her)
+        Sprites.drawKitten(ctx, cage.x + 10 - camera.x, cage.y + 20 - camera.y, 60, 70, cage.unlocked);
+        // Then draw cage bars
+        Sprites.drawCage(ctx, cage.x - camera.x, cage.y - camera.y, cage.width, cage.height);
     }
 
-    // Draw player
-    drawRect(player.x, player.y, player.width, player.height, player.color);
-    // Draw eyes
-    ctx.fillStyle = '#00FF00'; // Green eyes
-    ctx.fillRect(player.x + 10 - camera.x, player.y + 15 - camera.y, 8, 8);
-    ctx.fillRect(player.x + 22 - camera.x, player.y + 15 - camera.y, 8, 8);
+    // Draw player (Princess Scarlett)
+    Sprites.drawPrincess(ctx, player.x - camera.x, player.y - camera.y, player.width, player.height);
 
     // Draw level-specific UI
     if (currentLevel === 2 && key && !key.collected) {
