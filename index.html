@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cat Rescue - Save Blue Bell!</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas" width="1280" height="720"></canvas>
+        <div id="ui-overlay">
+            <div id="lives-display">
+                ❤️ <span id="lives-count">3</span>
+            </div>
+            <div id="level-display">
+                Level <span id="level-number">1</span>
+            </div>
+        </div>
+        <div id="title-screen" class="screen">
+            <h1>🐱 Cat Rescue 🐱</h1>
+            <h2>Save Blue Bell from the Giant Fox!</h2>
+            <p>Princess Scarlett must rescue her beloved kitten!</p>
+            <div class="controls-info">
+                <p><strong>Controls:</strong></p>
+                <p>← → Arrow Keys: Move</p>
+                <p>SPACEBAR: Jump</p>
+            </div>
+            <button id="start-button" class="game-button">Start Adventure</button>
+        </div>
+        <div id="game-over-screen" class="screen hidden">
+            <h1>Game Over</h1>
+            <p>Blue Bell needs you! Try again?</p>
+            <button id="restart-button" class="game-button">Restart</button>
+        </div>
+        <div id="victory-screen" class="screen hidden">
+            <h1>🎉 Victory! 🎉</h1>
+            <h2>Blue Bell is Safe!</h2>
+            <p>Princess Scarlett saved her beloved kitten!</p>
+            <button id="play-again-button" class="game-button">Play Again</button>
+        </div>
+    </div>
+    <script src="game.js"></script>
+</body>
+</html>
