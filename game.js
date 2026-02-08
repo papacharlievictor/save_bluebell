@@ -15,11 +15,12 @@ let GAME_WIDTH = 1280;
 let GAME_HEIGHT = 720;
 
 // Game state
-let gameState = 'TITLE'; // TITLE, PLAYING, GAME_OVER, VICTORY
+let gameState = 'TITLE'; // TITLE, PLAYING, PAUSED, GAME_OVER, VICTORY
 let currentLevel = 1;
 let lives = 3;
 let keys = {};
 let camera = { x: 0, y: 0 };
+let isPaused = false;
 
 // Player object
 const player = {
@@ -48,8 +49,14 @@ let key = null;
 document.addEventListener('keydown', (e) => {
     keys[e.key] = true;
 
-    // Jump
-    if (e.key === ' ' && player.onGround && gameState === 'PLAYING') {
+    // Pause/Unpause
+    if (e.key === 'Escape' && (gameState === 'PLAYING' || isPaused)) {
+        togglePause();
+        return;
+    }
+
+    // Jump (only when not paused)
+    if (e.key === ' ' && player.onGround && gameState === 'PLAYING' && !isPaused) {
         player.velocityY = JUMP_STRENGTH;
         player.onGround = false;
     }
@@ -130,6 +137,15 @@ function gameOver() {
 function victory() {
     gameState = 'VICTORY';
     document.getElementById('victory-screen').classList.remove('hidden');
+}
+
+function togglePause() {
+    isPaused = !isPaused;
+    if (isPaused) {
+        gameState = 'PAUSED';
+    } else {
+        gameState = 'PLAYING';
+    }
 }
 
 function nextLevel() {
@@ -226,7 +242,7 @@ function loadLevel1() {
         y: 580,
         width: 50,
         height: 40,
-        velocityX: 3.5,
+        velocityX: 2.8,
         color: '#654321',
         type: 'dog'
     });
@@ -236,7 +252,7 @@ function loadLevel1() {
         y: 580,
         width: 50,
         height: 40,
-        velocityX: 3.5,
+        velocityX: 2.8,
         color: '#654321',
         type: 'dog'
     });
@@ -372,8 +388,19 @@ function loadLevel4() {
 // GAME UPDATE LOOP
 // ===================================
 
+// Sanitize player position to prevent NaN/Infinity bugs
+function sanitizePlayer() {
+    if (!isFinite(player.x) || isNaN(player.x)) player.x = 100;
+    if (!isFinite(player.y) || isNaN(player.y)) player.y = 500;
+    if (!isFinite(player.velocityX) || isNaN(player.velocityX)) player.velocityX = 0;
+    if (!isFinite(player.velocityY) || isNaN(player.velocityY)) player.velocityY = 0;
+}
+
 function update() {
-    if (gameState !== 'PLAYING') return;
+    if (gameState !== 'PLAYING' || isPaused) return;
+
+    // Protect against NaN injection
+    sanitizePlayer();
 
     if (currentLevel === 1) {
         updateLevel1();
@@ -522,16 +549,21 @@ function updateLevel2() {
         }, 1000);
     }
 
-    // Spawn falling rocks randomly
-    if (Math.random() < 0.02) {
-        fallingRocks.push({
-            x: camera.x + Math.random() * GAME_WIDTH,
-            y: -50,
-            width: 40,
-            height: 40,
-            velocityY: 4,
-            color: '#696969'
-        });
+    // Spawn falling rocks randomly (but not too close to player or too many)
+    if (Math.random() < 0.02 && fallingRocks.length < 15) {
+        let rockX = camera.x + Math.random() * GAME_WIDTH;
+
+        // Don't spawn directly above player (give 150px buffer)
+        if (Math.abs(rockX - player.x) > 150) {
+            fallingRocks.push({
+                x: rockX,
+                y: -50,
+                width: 40,
+                height: 40,
+                velocityY: 4,
+                color: '#696969'
+            });
+        }
     }
 
     // Update falling rocks
@@ -747,6 +779,14 @@ function draw() {
     }
     if (currentLevel === 4) {
         drawText('Move when fox looks away!', GAME_WIDTH / 2, 50, 24, '#FFFFFF');
+    }
+
+    // Draw pause overlay
+    if (isPaused) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+        drawText('PAUSED', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 50, 72, '#FFFFFF');
+        drawText('Press ESC to Resume', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 30, 32, '#FFD700');
     }
 }
 
